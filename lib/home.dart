@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:bugsafe_app/login.dart';
+import 'package:bugsafe_app/profile.dart';
 
 // ----------------- MODELO -----------------
 class Insecto {
@@ -212,6 +213,17 @@ class _HomePageState extends State<HomePage> {
             label: "Historial",
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ProfileScreen(user: UserModel()),
+            ),
+          );
+        },
+        child: const Icon(Icons.person),
       ),
     );
   }
