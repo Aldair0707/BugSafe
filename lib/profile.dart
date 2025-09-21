@@ -27,7 +27,8 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         centerTitle: true,
-        title: const Text("BUGSAFE"),
+        title: const Text("BUGSAFE", style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 10, top: 5, bottom: 5),
