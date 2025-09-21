@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-class CameraPage extends StatelessWidget {
-  const CameraPage({super.key});
+class InfoPage extends StatelessWidget {
+  const InfoPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Cámara")),
+      appBar: AppBar(title: const Text("Más Información")),
       body: const Center(
         child: Text(
-          "Aquí irá la funcionalidad de la cámara",
+          "Aquí puedes mostrar detalles adicionales de la app",
           style: TextStyle(fontSize: 18),
         ),
       ),

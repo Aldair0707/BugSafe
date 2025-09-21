@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:bugsafe_app/login.dart';
 import 'package:bugsafe_app/profile.dart';
+import 'info_page.dart';
+import 'camera_page.dart';
 
 // ----------------- MODELO -----------------
 class Insecto {
@@ -68,10 +70,13 @@ class _HomePageState extends State<HomePage> {
         MaterialPageRoute(builder: (context) => const CameraPage()),
       );
     } else if (index == 2) {
-      // Historial
-      ScaffoldMessenger.of(
+      // Perfil
+      Navigator.push(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Historial presionado")));
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(user: UserModel()),
+        ),
+      );
     }
   }
 
@@ -150,6 +155,13 @@ class _HomePageState extends State<HomePage> {
                   itemCount: insectos.length,
                   itemBuilder: (context, index) {
                     final insecto = insectos[index];
+                    final screenWidth = MediaQuery.of(context).size.width;
+
+                    // tamaños responsivos
+                    final double imageSize =
+                        screenWidth * 0.2; // 20% del ancho de pantalla
+                    final double fontSize = screenWidth < 400 ? 14 : 18;
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -160,29 +172,70 @@ class _HomePageState extends State<HomePage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: ListTile(
-                          leading: Image.network(
-                            insecto.imagenUrl,
-                            width: 60,
-                            fit: BoxFit.cover,
-                          ),
-                          title: Text(insecto.nombre),
-                          subtitle: TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const InfoPage(),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Image.network(
+                                  insecto.imagenUrl,
+                                  width: imageSize,
+                                  height: imageSize,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(
+                                        Icons.image_not_supported,
+                                        size: 60,
+                                      ),
                                 ),
-                              );
-                            },
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text("Saber más"),
-                                Icon(Icons.arrow_right_alt),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 10),
+                              // Contenido flexible
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      insecto.nombre,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: fontSize,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: TextButton.icon(
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const InfoPage(),
+                                            ),
+                                          );
+                                        },
+                                        icon: const Icon(Icons.arrow_right_alt),
+                                        label: const Text("Saber más"),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.zero,
+                                          minimumSize: Size(
+                                            screenWidth * 0.25,
+                                            30,
+                                          ),
+                                          textStyle: TextStyle(
+                                            fontSize: fontSize * 0.9,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -208,76 +261,8 @@ class _HomePageState extends State<HomePage> {
             icon: Icon(Icons.camera_alt),
             label: "Cámara",
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: "Historial",
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProfileScreen(user: UserModel()),
-            ),
-          );
-        },
-        child: const Icon(Icons.person),
-      ),
-    );
-  }
-}
-
-// ---------------- CAMERA ----------------
-class CameraPage extends StatelessWidget {
-  const CameraPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Cámara")),
-      body: const Center(
-        child: Text(
-          "Aquí irá la funcionalidad de la cámara",
-          style: TextStyle(fontSize: 18),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------- PROFILE ----------------
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Perfil")),
-      body: const Center(
-        child: Text(
-          "Aquí irá la información del perfil del usuario",
-          style: TextStyle(fontSize: 18),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------- INFO ----------------
-class InfoPage extends StatelessWidget {
-  const InfoPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Más Información")),
-      body: const Center(
-        child: Text(
-          "Aquí puedes mostrar detalles adicionales de la app",
-          style: TextStyle(fontSize: 18),
-        ),
       ),
     );
   }
