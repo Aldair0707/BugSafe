@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 class UserModel {
-  final String fullName;
-  final String username;
-  final String email;
-  final String phone;
-  final String country;
+  String fullName;
+  String username;
+  String email;
+  String phone;
+  String country;
 
   UserModel({
     this.fullName = "Full Name",
@@ -16,13 +16,71 @@ class UserModel {
   });
 }
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   final UserModel user;
 
   const ProfileScreen({super.key, required this.user});
 
   @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  void _editField(String fieldName, String currentValue) {
+    final controller = TextEditingController(text: currentValue);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Editar $fieldName"),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(labelText: fieldName),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _updateField(fieldName, controller.text);
+                Navigator.pop(context);
+              },
+              child: const Text("Guardar"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _updateField(String fieldName, String newValue) {
+    setState(() {
+      switch (fieldName) {
+        case "Email":
+          widget.user.email = newValue;
+          break;
+        case "Phone":
+          widget.user.phone = newValue;
+          break;
+        case "Country":
+          widget.user.country = newValue;
+          break;
+        case "Username":
+          widget.user.username = newValue;
+          break;
+      }
+    });
+
+    debugPrint("Campo $fieldName actualizado a: $newValue");
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = widget.user;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
@@ -56,7 +114,16 @@ class ProfileScreen extends StatelessWidget {
               user.fullName,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
-            Text(user.username, style: const TextStyle(color: Colors.grey)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(user.username, style: const TextStyle(color: Colors.grey)),
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 18, color: Colors.grey),
+                  onPressed: () => _editField("Username", user.username),
+                ),
+              ],
+            ),
             const SizedBox(height: 25),
             Card(
               margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -65,16 +132,28 @@ class ProfileScreen extends StatelessWidget {
                   ListTile(
                     leading: const Icon(Icons.email),
                     title: Text(user.email),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.grey),
+                      onPressed: () => _editField("Email", user.email),
+                    ),
                   ),
                   const Divider(height: 1),
                   ListTile(
                     leading: const Icon(Icons.phone),
                     title: Text(user.phone),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.grey),
+                      onPressed: () => _editField("Phone", user.phone),
+                    ),
                   ),
                   const Divider(height: 1),
                   ListTile(
                     leading: const Icon(Icons.location_on),
                     title: Text(user.country),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.grey),
+                      onPressed: () => _editField("Country", user.country),
+                    ),
                   ),
                 ],
               ),

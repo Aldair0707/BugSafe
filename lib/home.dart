@@ -3,6 +3,7 @@ import 'package:bugsafe_app/login.dart';
 import 'package:bugsafe_app/profile.dart';
 import 'info_page.dart';
 import 'camera_page.dart';
+import 'historial.dart';
 
 // ----------------- MODELO -----------------
 class Insecto {
@@ -60,9 +61,13 @@ class _HomePageState extends State<HomePage> {
 
     if (index == 0) {
       // Buscar
-      ScaffoldMessenger.of(
+      Navigator.push(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Buscar presionado")));
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(user: UserModel()),
+          //builder: (context) => ProfileScreen(),
+        ),
+      );
     } else if (index == 1) {
       // Cámara
       Navigator.push(
@@ -74,7 +79,8 @@ class _HomePageState extends State<HomePage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ProfileScreen(user: UserModel()),
+          //builder: (context) => ProfileScreen(user: UserModel()),
+          builder: (context) => HistorialScreen(),
         ),
       );
     }
@@ -256,12 +262,15 @@ class _HomePageState extends State<HomePage> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Buscar"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "perfil"),
           BottomNavigationBarItem(
             icon: Icon(Icons.camera_alt),
             label: "Cámara",
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.history),
+            label: "Historial",
+          ),
         ],
       ),
     );
