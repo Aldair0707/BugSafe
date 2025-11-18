@@ -27,6 +27,7 @@ class Insecto {
 }
 
 class HomePage extends StatefulWidget {
+  
   const HomePage({super.key});
 
   @override

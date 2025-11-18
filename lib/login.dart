@@ -138,6 +138,19 @@ class _LoginPageState extends State<LoginPage> {
                       );
                     },
                   ),
+
+                  const SizedBox(height: 15),
+
+                  TextButton(
+                    child: const Text("¿Olvidaste tu contraseña?"),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => RegisterPage()),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
