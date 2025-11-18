@@ -1,3 +1,12 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -5,10 +14,20 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+
 android {
     namespace = "com.example.bugsafe_app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
+
+      signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+           }
+        }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
