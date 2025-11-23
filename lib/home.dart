@@ -1,9 +1,11 @@
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:bugsafe_app/login.dart';
-import 'package:bugsafe_app/profile.dart';
-import 'info_page.dart';
+
+// --- IMPORTS ---
 import 'camera_page.dart';
 import 'historial.dart';
+import 'info_page.dart';
+import 'profile.dart';
 
 // ----------------- MODELO -----------------
 class Insecto {
@@ -27,7 +29,6 @@ class Insecto {
 }
 
 class HomePage extends StatefulWidget {
-  
   const HomePage({super.key});
 
   @override
@@ -35,244 +36,360 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 1;
+  int _selectedIndex = 0;
 
-  Future<List<Insecto>> fetchInsectos() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      Insecto(
-        nombre: "Insecto X",
-        imagenUrl:
-            "https://upload.wikimedia.org/wikipedia/commons/3/3e/Moth.jpg",
-        descripcion: "Insecto de ejemplo",
-      ),
-      Insecto(
-        nombre: "Insecto Y",
-        imagenUrl:
-            "https://upload.wikimedia.org/wikipedia/commons/3/3e/Moth.jpg",
-        descripcion: "Otro insecto de prueba",
-      ),
-    ];
-  }
+  final Color _bgBlack = const Color(0xFF050505);
+  final Color _neonAccent = const Color(0xFF9C27B0);
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    if (index == 0) {
-      // Buscar
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ProfileScreen(user: UserModel()),
-          //builder: (context) => ProfileScreen(),
-        ),
-      );
-    } else if (index == 1) {
-      // Cámara
+    if (index == 1) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const CameraPage()),
       );
-    } else if (index == 2) {
-      // Perfil
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          //builder: (context) => ProfileScreen(user: UserModel()),
-          builder: (context) => HistorialScreen(),
-        ),
-      );
+      return;
+    }
+
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  Widget _buildBody() {
+    switch (_selectedIndex) {
+      case 0:
+        return const HomeView();
+      case 1:
+        return Container();
+      case 2:
+        return const HistorialScreen();
+      case 3:
+        return ProfileScreen(user: UserModel());
+      default:
+        return const HomeView();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: AppBar(
-          automaticallyImplyLeading: false,
-          backgroundColor: Colors.black,
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      backgroundColor: _bgBlack,
+      body: _buildBody(),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.9),
+          border: Border(
+            top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.transparent,
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          selectedItemColor: _neonAccent,
+          unselectedItemColor: Colors.grey,
+          showUnselectedLabels: true,
+          selectedFontSize: 12,
+          unselectedFontSize: 10,
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_filled),
+              label: "Home",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.camera_alt),
+              label: "Cámara",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.history),
+              label: "Historial",
+            ),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Perfil"),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HomeView extends StatefulWidget {
+  const HomeView({super.key});
+
+  @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  final Color _neonAccent = const Color(0xFF9C27B0);
+
+  Future<List<Insecto>> fetchInsectos() async {
+    await Future.delayed(const Duration(seconds: 1));
+    return [
+      Insecto(
+        nombre: "Mariposa Monarca",
+        imagenUrl:
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Monarch_Butterfly_Danaus_plexippus_Male_2664px.jpg/640px-Monarch_Butterfly_Danaus_plexippus_Male_2664px.jpg",
+        descripcion: "Conocida por su larga migración anual.",
+      ),
+      Insecto(
+        nombre: "Escarabajo Hércules",
+        imagenUrl:
+            "https://media.istockphoto.com/id/589953406/es/foto/escarabajo-h%C3%A9rcules.jpg?s=612x612&w=0&k=20&c=nXW1fY59mULi5JSrw07tSqCU6zueeXrLLoMl7a7ysko=",
+        descripcion: "Uno de los escarabajos más grandes y fuertes.",
+      ),
+      Insecto(
+        nombre: "Abeja Melífera",
+        imagenUrl:
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Apis_mellifera_Western_honey_bee.jpg/640px-Apis_mellifera_Western_honey_bee.jpg",
+        descripcion: "Vital para la polinización de cultivos.",
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment(0, -0.8),
+              radius: 1.5,
+              colors: [Color(0xFF252525), Color(0xFF050505)],
+            ),
+          ),
+        ),
+
+        SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(width: 40),
+              _buildHeader(),
+              const SizedBox(height: 20),
+              _buildSearchBar(),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  "DESCUBRIMIENTOS RECIENTES",
+                  style: TextStyle(
+                    color: _neonAccent,
+                    fontSize: 12,
+                    letterSpacing: 2.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(child: _buildInsectList()),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "BIENVENIDO A",
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 5),
               const Text(
                 "BUGSAFE",
                 style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                  letterSpacing: 1.2,
                   color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  letterSpacing: 2.0,
                 ),
-              ),
-              // Logo desde assets
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.black,
-                  shape: BoxShape.circle,
-                ),
-                child: Image.asset("assets/logo2.jpeg", height: 32, width: 32),
               ),
             ],
           ),
-          centerTitle: true,
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: _neonAccent, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: _neonAccent.withValues(alpha: 0.3),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: const CircleAvatar(
+              radius: 20,
+              backgroundColor: Colors.black,
+              backgroundImage: AssetImage("assets/logo2.jpeg"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: TextField(
+          style: const TextStyle(color: Colors.white),
+          decoration: InputDecoration(
+            hintText: "Buscar insecto...",
+            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+            prefixIcon: Icon(Icons.search, color: _neonAccent),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 15,
+            ),
+          ),
         ),
       ),
+    );
+  }
 
-      body: Column(
-        children: [
-          // Barra de búsqueda
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: "Search",
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: Colors.grey.shade200,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide.none,
+  Widget _buildInsectList() {
+    return FutureBuilder<List<Insecto>>(
+      future: fetchInsectos(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator(color: _neonAccent));
+        } else if (snapshot.hasError) {
+          return const Center(
+            child: Text(
+              "Error al cargar",
+              style: TextStyle(color: Colors.white),
+            ),
+          );
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(
+            child: Text("Sin datos", style: TextStyle(color: Colors.white)),
+          );
+        }
+
+        final insectos = snapshot.data!;
+        return ListView.builder(
+          physics: const BouncingScrollPhysics(),
+          itemCount: insectos.length,
+          itemBuilder: (context, index) {
+            return _buildInsectCard(insectos[index]);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildInsectCard(Insecto insecto) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const InfoPage()),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        height: 100,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.1),
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
               ),
-            ),
-          ),
 
-          Expanded(
-            child: FutureBuilder<List<Insecto>>(
-              future: fetchInsectos(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return const Center(child: Text("Error al cargar insectos"));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text("No hay insectos registrados"),
-                  );
-                }
-
-                final insectos = snapshot.data!;
-                return ListView.builder(
-                  itemCount: insectos.length,
-                  itemBuilder: (context, index) {
-                    final insecto = insectos[index];
-                    final screenWidth = MediaQuery.of(context).size.width;
-
-                    // tamaños responsivos
-                    final double imageSize =
-                        screenWidth * 0.2; // 20% del ancho de pantalla
-                    final double fontSize = screenWidth < 400 ? 14 : 18;
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+              Row(
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
+                    color: Colors.black,
+                    child: Image.network(
+                      insecto.imagenUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Icon(
+                        Icons.bug_report,
+                        size: 40,
+                        color: Colors.white.withValues(alpha: 0.2),
                       ),
-                      child: Card(
-                        color: Colors.grey.shade400,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Image.network(
-                                  insecto.imagenUrl,
-                                  width: imageSize,
-                                  height: imageSize,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(
-                                        Icons.image_not_supported,
-                                        size: 60,
-                                      ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              // Contenido flexible
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      insecto.nombre,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: fontSize,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
-                                    ),
-                                    Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: TextButton.icon(
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const InfoPage(),
-                                            ),
-                                          );
-                                        },
-                                        icon: const Icon(Icons.arrow_right_alt),
-                                        label: const Text("Saber más"),
-                                        style: TextButton.styleFrom(
-                                          padding: EdgeInsets.zero,
-                                          minimumSize: Size(
-                                            screenWidth * 0.25,
-                                            30,
-                                          ),
-                                          textStyle: TextStyle(
-                                            fontSize: fontSize * 0.9,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                    ),
+                  ),
+
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            insecto.nombre,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
+                          const SizedBox(height: 4),
+                          Text(
+                            insecto.descripcion,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              fontSize: 12,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+                    ),
+                  ),
 
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        selectedItemColor: Colors.purple,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "perfil"),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.camera_alt),
-            label: "Cámara",
+                  Padding(
+                    padding: const EdgeInsets.only(right: 15),
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      color: _neonAccent,
+                      size: 16,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: "Historial",
-          ),
-        ],
+        ),
       ),
     );
   }
