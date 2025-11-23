@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+// Asegúrate de que estas rutas coincidan con la estructura de tu proyecto
 import 'package:bugsafe_app/home.dart';
 import 'package:bugsafe_app/register.dart';
+import 'authService.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,9 +15,21 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // Claves y controladores
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  // Instancia de tu servicio de autenticación
+  final AuthService _authService = AuthService();
+
+  @override
+  void dispose() {
+    // Limpiamos controladores al salir
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,14 +43,11 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // Logo
+                  // --- LOGO Y MARCA ---
                   Center(
                     child: Column(
                       children: [
-                        Image.asset(
-                          "assets/logo.jpeg",
-                          height: 120,
-                        ),
+                        Image.asset("assets/logo.jpeg", height: 120),
                         const SizedBox(height: 8),
                         const Text(
                           "BugSafe",
@@ -42,13 +56,13 @@ class _LoginPageState extends State<LoginPage> {
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 30),
 
-                  // Título
+                  // --- TÍTULO ---
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -61,7 +75,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Email
+                  // --- INPUT: EMAIL ---
                   _buildTextField(
                     controller: _emailController,
                     label: "Email address",
@@ -70,8 +84,7 @@ class _LoginPageState extends State<LoginPage> {
                       if (value == null || value.isEmpty) {
                         return "El correo no puede estar vacío";
                       }
-                      final emailRegex =
-                          RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                      final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
                       if (!emailRegex.hasMatch(value)) {
                         return "Ingrese un correo válido";
                       }
@@ -79,7 +92,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
 
-                  // Password
+                  // --- INPUT: PASSWORD ---
                   _buildTextField(
                     controller: _passwordController,
                     label: "Password",
@@ -97,7 +110,7 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 25),
 
-                  // Botón de login
+                  // --- BOTÓN: EMAIL SIGN IN ---
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -108,14 +121,33 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         if (_formKey.currentState!.validate()) {
-                         //validacion
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => HomePage()),
-                          );
+                          try {
+                            await _authService.login(
+                              email: _emailController.text,
+                              password: _passwordController.text,
+                            );
+                            // Login exitoso -> Home
+                            if (context.mounted) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => HomePage(),
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            print("Error login: $e");
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Error: ${e.toString()}"),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
                         }
                       },
                       child: const Text(
@@ -125,29 +157,133 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
 
+                  const SizedBox(height: 20),
+
+                  // --- DIVISOR ---
+                  Row(
+                    children: const [
+                      Expanded(
+                        child: Divider(thickness: 1, color: Colors.grey),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 10),
+                        child: Text("O", style: TextStyle(color: Colors.grey)),
+                      ),
+                      Expanded(
+                        child: Divider(thickness: 1, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // --- BOTÓN: GOOGLE SIGN IN ---
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.grey),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      // Usa un icono de Material o tu propio asset
+                      icon: const Icon(
+                        Icons.g_mobiledata,
+                        size: 35,
+                        color: Colors.red,
+                      ),
+                      label: const Text(
+                        "Continuar con Google",
+                        style: TextStyle(
+                          color: Colors.black87,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      onPressed: () async {
+                        try {
+                          // 1. Login con Google
+                          final userCredential = await _authService
+                              .loginWithGoogle();
+
+                          if (userCredential != null &&
+                              userCredential.user != null) {
+                            final user = userCredential.user!;
+
+                            // 2. Referencia a Firestore
+                            final userDocRef = FirebaseFirestore.instance
+                                .collection('users')
+                                .doc(user.uid);
+                            final docSnapshot = await userDocRef.get();
+
+                            // 3. Si NO existe, lo creamos con tu estructura
+                            if (!docSnapshot.exists) {
+                              // Generar username del email
+                              String generatedUsername = user.email!.split(
+                                '@',
+                              )[0];
+
+                              await userDocRef.set({
+                                "name":
+                                    user.displayName ?? "", // Nombre de Google
+                                "username":
+                                    generatedUsername, // Username autogenerado
+                                "email": user.email,
+                                "country": "", // Vacío (llenar después)
+                                "phoneNumber": "", // Vacío (llenar después)
+                                "createdAt": DateTime.now(),
+                              });
+                            }
+
+                            // 4. Login exitoso -> Home
+                            if (context.mounted) {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => HomePage(),
+                                ),
+                              );
+                            }
+                          }
+                        } catch (e) {
+                          print("Error Google: $e");
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Error Google: ${e.toString()}"),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  ),
+
                   const SizedBox(height: 15),
 
-                  // Botón de registro
+                  // --- LINKS REGISTRO / RECUPERAR ---
                   TextButton(
                     child: const Text("¿No tienes cuenta? Registrarse"),
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => RegisterPage()),
+                        MaterialPageRoute(builder: (context) => RegisterPage()),
                       );
                     },
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 5),
 
                   TextButton(
                     child: const Text("¿Olvidaste tu contraseña?"),
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => RegisterPage()),
+                        MaterialPageRoute(builder: (context) => RegisterPage()),
                       );
                     },
                   ),
@@ -160,6 +296,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  // Método auxiliar para los inputs
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -176,11 +313,11 @@ class _LoginPageState extends State<LoginPage> {
         validator: validator,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 14,
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         ),
       ),
     );

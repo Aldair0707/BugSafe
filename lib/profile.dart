@@ -1,31 +1,41 @@
+import 'package:bugsafe_app/authService.dart';
 import 'package:flutter/material.dart';
-
-class UserModel {
-  String fullName;
-  String username;
-  String email;
-  String phone;
-  String country;
-
-  UserModel({
-    this.fullName = "Full Name",
-    this.username = "Username",
-    this.email = "Email address",
-    this.phone = "Phone number",
-    this.country = "Country",
-  });
-}
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:bugsafe_app/models/usuario.dart';
+import 'authService.dart';
+import 'login.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final UserModel user;
+  final String uid;
 
-  const ProfileScreen({super.key, required this.user});
+  const ProfileScreen({super.key, required this.uid});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  UserModel? user;
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  Future<void> loadUserData() async {
+    final data = await AuthService().getUserData(widget.uid);
+
+    if (data != null) {
+      setState(() {
+        user = UserModel.fromMap(data);
+        loading = false;
+      });
+    }
+  }
+
   void _editField(String fieldName, String currentValue) {
     final controller = TextEditingController(text: currentValue);
 
@@ -56,30 +66,41 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _updateField(String fieldName, String newValue) {
+  void _updateField(String fieldName, String newValue) async {
+    if (user == null) return;
+
     setState(() {
       switch (fieldName) {
         case "Email":
-          widget.user.email = newValue;
+          user!.email = newValue;
           break;
         case "Phone":
-          widget.user.phone = newValue;
+          user!.phone = newValue;
           break;
         case "Country":
-          widget.user.country = newValue;
+          user!.country = newValue;
           break;
         case "Username":
-          widget.user.username = newValue;
+          user!.username = newValue;
           break;
       }
     });
 
-    debugPrint("Campo $fieldName actualizado a: $newValue");
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.uid)
+        .update(user!.toMap());
+
+    debugPrint("Campo $fieldName actualizado: $newValue");
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = widget.user;
+    if (loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final u = user!;
 
     return Scaffold(
       appBar: AppBar(
@@ -111,56 +132,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 15),
             Text(
-              user.fullName,
+              u.fullName,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(user.username, style: const TextStyle(color: Colors.grey)),
+                Text(u.username, style: const TextStyle(color: Colors.grey)),
                 IconButton(
                   icon: const Icon(Icons.edit, size: 18, color: Colors.grey),
-                  onPressed: () => _editField("Username", user.username),
+                  onPressed: () => _editField("Username", u.username),
                 ),
               ],
             ),
+
             const SizedBox(height: 25),
+
             Card(
               margin: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
                   ListTile(
                     leading: const Icon(Icons.email),
-                    title: Text(user.email),
+                    title: Text(u.email),
                     trailing: IconButton(
                       icon: const Icon(Icons.edit, color: Colors.grey),
-                      onPressed: () => _editField("Email", user.email),
+                      onPressed: () => _editField("Email", u.email),
                     ),
                   ),
                   const Divider(height: 1),
+
                   ListTile(
                     leading: const Icon(Icons.phone),
-                    title: Text(user.phone),
+                    title: Text(u.phone),
                     trailing: IconButton(
                       icon: const Icon(Icons.edit, color: Colors.grey),
-                      onPressed: () => _editField("Phone", user.phone),
+                      onPressed: () => _editField("Phone", u.phone),
                     ),
                   ),
                   const Divider(height: 1),
+
                   ListTile(
                     leading: const Icon(Icons.location_on),
-                    title: Text(user.country),
+                    title: Text(u.country),
                     trailing: IconButton(
                       icon: const Icon(Icons.edit, color: Colors.grey),
-                      onPressed: () => _editField("Country", user.country),
+                      onPressed: () => _editField("Country", u.country),
                     ),
                   ),
                 ],
               ),
             ),
+
             const SizedBox(height: 30),
+
             TextButton.icon(
-              onPressed: () {},
+              onPressed: () async {
+                // 1. Cerrar sesión en Firebase
+                await AuthService().logout();
+
+                // 2. Navegar al Login y borrar el historial de navegación
+                // Asegúrate de cambiar 'LoginScreen()' por el nombre real de tu widget de login.
+                if (context.mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) =>
+                        false, // Esto elimina todas las rutas anteriores (Home, Profile, etc.)
+                  );
+                }
+              },
               icon: const Icon(Icons.logout),
               label: const Text("Log out", style: TextStyle(fontSize: 16)),
             ),

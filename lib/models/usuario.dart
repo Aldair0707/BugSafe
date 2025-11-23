@@ -1,35 +1,35 @@
-class Usuario {
-  final String nombre;
-  final String correo;
-  final String contrasena;
-  final String telefono;
-  final String direccion;
+class UserModel {
+  String fullName;
+  String username;
+  String email;
+  String phone;
+  String country;
 
-  Usuario({
-    required this.nombre,
-    required this.correo,
-    required this.contrasena,
-    required this.telefono,
-    required this.direccion,
+  UserModel({
+    this.fullName = "",
+    this.username = "",
+    this.email = "",
+    this.phone = "",
+    this.country = "",
   });
 
-  factory Usuario.fromJson(Map<String, dynamic> json) {
-    return Usuario(
-      nombre: json['nombre'],
-      correo: json['correo'],
-      contrasena: json['contrasena'],
-      telefono: json['telefono'],
-      direccion: json['direccion'],
+  factory UserModel.fromMap(Map<String, dynamic> data) {
+    return UserModel(
+      fullName: data["name"] ?? "",
+      username: data["username"] ?? "",
+      email: data["email"] ?? "",
+      phone: data["phoneNumber"] ?? "",
+      country: data["country"] ?? "",
     );
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic> toMap() {
     return {
-      'nombre': nombre,
-      'correo': correo,
-      'contrasena': contrasena,
-      'telefono': telefono,
-      'direccion': direccion,
+      "name": fullName,
+      "username": username,
+      "email": email,
+      "phoneNumber": phone,
+      "country": country,
     };
   }
 }

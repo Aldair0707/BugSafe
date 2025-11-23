@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:bugsafe_app/login.dart';
 import 'package:bugsafe_app/profile.dart';
@@ -27,7 +28,6 @@ class Insecto {
 }
 
 class HomePage extends StatefulWidget {
-  
   const HomePage({super.key});
 
   @override
@@ -65,8 +65,8 @@ class _HomePageState extends State<HomePage> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ProfileScreen(user: UserModel()),
-          //builder: (context) => ProfileScreen(),
+          builder: (context) =>
+              ProfileScreen(uid: FirebaseAuth.instance.currentUser!.uid),
         ),
       );
     } else if (index == 1) {
