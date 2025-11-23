@@ -15,17 +15,14 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  // Claves y controladores
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  // Instancia de tu servicio de autenticación
   final AuthService _authService = AuthService();
 
   @override
   void dispose() {
-    // Limpiamos controladores al salir
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -62,7 +59,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 30),
 
-                  // --- TÍTULO ---
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -75,7 +71,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // --- INPUT: EMAIL ---
                   _buildTextField(
                     controller: _emailController,
                     label: "Email address",
@@ -92,7 +87,6 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
 
-                  // --- INPUT: PASSWORD ---
                   _buildTextField(
                     controller: _passwordController,
                     label: "Password",
@@ -110,7 +104,6 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 25),
 
-                  // --- BOTÓN: EMAIL SIGN IN ---
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -159,7 +152,6 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 20),
 
-                  // --- DIVISOR ---
                   Row(
                     children: const [
                       Expanded(
@@ -177,7 +169,6 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 20),
 
-                  // --- BOTÓN: GOOGLE SIGN IN ---
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -189,7 +180,6 @@ class _LoginPageState extends State<LoginPage> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      // Usa un icono de Material o tu propio asset
                       icon: const Icon(
                         Icons.g_mobiledata,
                         size: 35,
@@ -205,7 +195,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       onPressed: () async {
                         try {
-                          // 1. Login con Google
                           final userCredential = await _authService
                               .loginWithGoogle();
 
@@ -219,7 +208,6 @@ class _LoginPageState extends State<LoginPage> {
                                 .doc(user.uid);
                             final docSnapshot = await userDocRef.get();
 
-                            // 3. Si NO existe, lo creamos con tu estructura
                             if (!docSnapshot.exists) {
                               // Generar username del email
                               String generatedUsername = user.email!.split(
@@ -227,13 +215,11 @@ class _LoginPageState extends State<LoginPage> {
                               )[0];
 
                               await userDocRef.set({
-                                "name":
-                                    user.displayName ?? "", // Nombre de Google
-                                "username":
-                                    generatedUsername, // Username autogenerado
+                                "name": user.displayName ?? "",
+                                "username": generatedUsername,
                                 "email": user.email,
-                                "country": "", // Vacío (llenar después)
-                                "phoneNumber": "", // Vacío (llenar después)
+                                "country": "",
+                                "phoneNumber": "",
                                 "createdAt": DateTime.now(),
                               });
                             }
@@ -265,7 +251,6 @@ class _LoginPageState extends State<LoginPage> {
 
                   const SizedBox(height: 15),
 
-                  // --- LINKS REGISTRO / RECUPERAR ---
                   TextButton(
                     child: const Text("¿No tienes cuenta? Registrarse"),
                     onPressed: () {

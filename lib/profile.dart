@@ -189,17 +189,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             TextButton.icon(
               onPressed: () async {
-                // 1. Cerrar sesión en Firebase
                 await AuthService().logout();
 
-                // 2. Navegar al Login y borrar el historial de navegación
-                // Asegúrate de cambiar 'LoginScreen()' por el nombre real de tu widget de login.
                 if (context.mounted) {
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (context) => const LoginPage()),
-                    (route) =>
-                        false, // Esto elimina todas las rutas anteriores (Home, Profile, etc.)
+                    (route) => false,
                   );
                 }
               },
