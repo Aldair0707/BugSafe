@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
@@ -50,21 +51,27 @@ class _HomePageState extends State<HomePage> {
       return;
     }
 
-    setState(() {
-      _selectedIndex = index;
-    });
+    // Funcionalidad de auth-firebase al ir a Perfil
+    if (index == 3) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ProfileScreen(uid: uid ?? ""),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _selectedIndex = index);
   }
 
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
         return const HomeView();
-      case 1:
-        return Container();
       case 2:
         return const HistorialScreen();
-      case 3:
-        return ProfileScreen(user: UserModel());
       default:
         return const HomeView();
     }
@@ -77,9 +84,9 @@ class _HomePageState extends State<HomePage> {
       body: _buildBody(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.9),
+          color: Colors.black.withOpacity(0.9),
           border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            top: BorderSide(color: Colors.white.withOpacity(0.1)),
           ),
         ),
         child: BottomNavigationBar(
@@ -137,7 +144,7 @@ class _HomeViewState extends State<HomeView> {
         nombre: "Escarabajo Hércules",
         imagenUrl:
             "https://media.istockphoto.com/id/589953406/es/foto/escarabajo-h%C3%A9rcules.jpg?s=612x612&w=0&k=20&c=nXW1fY59mULi5JSrw07tSqCU6zueeXrLLoMl7a7ysko=",
-        descripcion: "Uno de los escarabajos más grandes y fuertes.",
+        descripcion: "Uno de los escarabajos más grandes.",
       ),
       Insecto(
         nombre: "Abeja Melífera",
@@ -191,6 +198,8 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
+  // ---------- UI COMPONENTES -----------
+
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -203,7 +212,7 @@ class _HomeViewState extends State<HomeView> {
               Text(
                 "BIENVENIDO A",
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.5),
+                  color: Colors.white.withOpacity(0.5),
                   fontSize: 12,
                   letterSpacing: 1.5,
                 ),
@@ -227,7 +236,7 @@ class _HomeViewState extends State<HomeView> {
               border: Border.all(color: _neonAccent, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: _neonAccent.withValues(alpha: 0.3),
+                  color: _neonAccent.withOpacity(0.3),
                   blurRadius: 10,
                 ),
               ],
@@ -248,21 +257,19 @@ class _HomeViewState extends State<HomeView> {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: Colors.white.withOpacity(0.1)),
         ),
         child: TextField(
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
             hintText: "Buscar insecto...",
-            hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+            hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
             prefixIcon: Icon(Icons.search, color: _neonAccent),
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 15,
-            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           ),
         ),
       ),
@@ -275,19 +282,12 @@ class _HomeViewState extends State<HomeView> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator(color: _neonAccent));
-        } else if (snapshot.hasError) {
+        }
+        if (snapshot.hasError) {
           return const Center(
-            child: Text(
-              "Error al cargar",
-              style: TextStyle(color: Colors.white),
-            ),
-          );
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(
-            child: Text("Sin datos", style: TextStyle(color: Colors.white)),
+            child: Text("Error al cargar", style: TextStyle(color: Colors.white)),
           );
         }
-
         final insectos = snapshot.data!;
         return ListView.builder(
           physics: const BouncingScrollPhysics(),
@@ -319,9 +319,9 @@ class _HomeViewState extends State<HomeView> {
                 filter: ui.ImageFilter.blur(sigmaX: 5, sigmaY: 5),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: Colors.white.withOpacity(0.05),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.1),
+                      color: Colors.white.withOpacity(0.1),
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -337,10 +337,10 @@ class _HomeViewState extends State<HomeView> {
                     child: Image.network(
                       insecto.imagenUrl,
                       fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Icon(
+                      errorBuilder: (context, e, s) => Icon(
                         Icons.bug_report,
                         size: 40,
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: Colors.white.withOpacity(0.2),
                       ),
                     ),
                   ),
@@ -366,7 +366,7 @@ class _HomeViewState extends State<HomeView> {
                           Text(
                             insecto.descripcion,
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.5),
+                              color: Colors.white.withOpacity(0.5),
                               fontSize: 12,
                             ),
                             maxLines: 2,

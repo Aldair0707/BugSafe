@@ -1,36 +1,47 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class UserModel {
-  String fullName;
-  String username;
-  String email;
-  String phone;
-  String country;
-
-  UserModel({
-    this.fullName = "Full Name",
-    this.username = "bughunter_2025",
-    this.email = "usuario@bugsafe.com",
-    this.phone = "+52 55 1234 5678",
-    this.country = "México",
-  });
-}
+import 'package:bugsafe_app/models/usuario.dart';
+import 'package:bugsafe_app/authService.dart';
+import 'login.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final UserModel user;
+  final String uid;
 
-  const ProfileScreen({super.key, required this.user});
+  const ProfileScreen({super.key, required this.uid});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // --- PALETA ---
+  // --- FIREBASE USER DATA ---
+  UserModel? user;
+  bool loading = true;
+
+  // --- PALETA VISUAL ---
   final Color _bgBlack = const Color(0xFF050505);
   final Color _neonAccent = const Color(0xFF9C27B0);
   final Color _surfaceColor = const Color(0xFF1A1A1A);
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  Future<void> loadUserData() async {
+    final data = await AuthService().getUserData(widget.uid);
+
+    if (data != null) {
+      setState(() {
+        user = UserModel.fromMap(data);
+        loading = false;
+      });
+    }
+  }
 
   void _editField(String fieldName, String currentValue) {
     final controller = TextEditingController(text: currentValue);
@@ -42,24 +53,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: _surfaceColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+            side: BorderSide(color: Colors.white.withOpacity(0.1)),
           ),
-          title: Text(
-            "Editar $fieldName",
-            style: const TextStyle(color: Colors.white),
-          ),
+          title: Text("Editar $fieldName", style: const TextStyle(color: Colors.white)),
           content: TextField(
             controller: controller,
             style: const TextStyle(color: Colors.white),
             cursorColor: _neonAccent,
             decoration: InputDecoration(
               labelText: fieldName,
-              labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(
-                  color: _neonAccent.withValues(alpha: 0.5),
-                ),
-              ),
+              labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
               focusedBorder: UnderlineInputBorder(
                 borderSide: BorderSide(color: _neonAccent),
               ),
@@ -68,10 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text(
-                "Cancelar",
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-              ),
+              child: Text("Cancelar", style: TextStyle(color: Colors.white.withOpacity(0.5))),
             ),
             ElevatedButton(
               onPressed: () {
@@ -83,43 +83,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 foregroundColor: Colors.white,
               ),
               child: const Text("Guardar"),
-            ),
+            )
           ],
         );
       },
     );
   }
 
-  void _updateField(String fieldName, String newValue) {
+  void _updateField(String fieldName, String newValue) async {
+    if (user == null) return;
+
     setState(() {
       switch (fieldName) {
-        case "Email":
-          widget.user.email = newValue;
-          break;
-        case "Phone":
-          widget.user.phone = newValue;
-          break;
-        case "Country":
-          widget.user.country = newValue;
+        case "Name":
+          user!.fullName = newValue;
           break;
         case "Username":
-          widget.user.username = newValue;
+          user!.username = newValue;
           break;
-        case "Name":
-          widget.user.fullName = newValue;
+        case "Email":
+          user!.email = newValue;
+          break;
+        case "Phone":
+          user!.phone = newValue;
+          break;
+        case "Country":
+          user!.country = newValue;
           break;
       }
     });
+
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(widget.uid)
+        .update(user!.toMap());
   }
 
   @override
   Widget build(BuildContext context) {
-    final user = widget.user;
+    if (loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final u = user!;
 
     return Scaffold(
       backgroundColor: _bgBlack,
       body: Stack(
         children: [
+          // --- FONDO GRADIENTE ---
           Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
@@ -135,11 +147,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
+                  // --- HEADER ---
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 20,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -154,6 +164,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
 
+                        // LOGO ESQUINA
                         Stack(
                           alignment: Alignment.center,
                           children: [
@@ -164,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                    color: _neonAccent.withValues(alpha: 0.4),
+                                    color: _neonAccent.withOpacity(0.4),
                                     blurRadius: 15,
                                   ),
                                 ],
@@ -174,17 +185,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               padding: const EdgeInsets.all(2),
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: _neonAccent,
-                                  width: 2,
-                                ),
+                                border: Border.all(color: _neonAccent, width: 2),
                               ),
                               child: const CircleAvatar(
                                 radius: 16,
                                 backgroundColor: Colors.black,
-                                backgroundImage: AssetImage(
-                                  "assets/logo2.jpeg",
-                                ),
+                                backgroundImage: AssetImage("assets/logo2.jpeg"),
                               ),
                             ),
                           ],
@@ -195,6 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 10),
 
+                  // --- AVATAR PRINCIPAL ---
                   Stack(
                     alignment: Alignment.center,
                     children: [
@@ -205,7 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: _neonAccent.withValues(alpha: 0.3),
+                              color: _neonAccent.withOpacity(0.3),
                               blurRadius: 40,
                               spreadRadius: 5,
                             ),
@@ -217,35 +224,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         backgroundColor: Colors.black,
                         backgroundImage: AssetImage("assets/logo2.jpeg"),
                       ),
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: _neonAccent,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: _bgBlack, width: 3),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
 
                   const SizedBox(height: 20),
 
+                  // --- NOMBRE ---
                   GestureDetector(
-                    onTap: () => _editField("Name", user.fullName),
+                    onTap: () => _editField("Name", u.fullName),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          user.fullName,
+                          u.fullName,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 22,
@@ -253,19 +244,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Icon(
-                          Icons.edit,
-                          color: Colors.white.withValues(alpha: 0.3),
-                          size: 16,
-                        ),
+                        Icon(Icons.edit, size: 16, color: Colors.white54),
                       ],
                     ),
                   ),
 
+                  // --- USERNAME ---
                   GestureDetector(
-                    onTap: () => _editField("Username", user.username),
+                    onTap: () => _editField("Username", u.username),
                     child: Text(
-                      "@${user.username}",
+                      "@${u.username}",
                       style: TextStyle(
                         color: _neonAccent,
                         fontSize: 14,
@@ -276,6 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 40),
 
+                  // --- TARJETA GLASS ---
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: ClipRRect(
@@ -284,34 +273,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         filter: ui.ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
+                            color: Colors.white.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.1),
-                            ),
+                            border: Border.all(color: Colors.white.withOpacity(0.1)),
                           ),
                           child: Column(
                             children: [
-                              _buildGlassTile(
-                                Icons.email_outlined,
-                                "Email",
-                                user.email,
-                                () => _editField("Email", user.email),
-                              ),
+                              _buildGlassTile(Icons.email_outlined, "Email", u.email, () {
+                                _editField("Email", u.email);
+                              }),
                               _buildDivider(),
-                              _buildGlassTile(
-                                Icons.phone_outlined,
-                                "Phone",
-                                user.phone,
-                                () => _editField("Phone", user.phone),
-                              ),
+
+                              _buildGlassTile(Icons.phone_outlined, "Phone", u.phone, () {
+                                _editField("Phone", u.phone);
+                              }),
                               _buildDivider(),
-                              _buildGlassTile(
-                                Icons.location_on_outlined,
-                                "Country",
-                                user.country,
-                                () => _editField("Country", user.country),
-                              ),
+
+                              _buildGlassTile(Icons.location_on_outlined, "Country", u.country, () {
+                                _editField("Country", u.country);
+                              }),
                             ],
                           ),
                         ),
@@ -321,21 +301,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 40),
 
+                  // --- LOGOUT ---
                   TextButton.icon(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(
-                      Icons.logout,
-                      color: Colors.redAccent.withValues(alpha: 0.8),
-                    ),
+                    onPressed: () async {
+                      await AuthService().logout();
+
+                      if (context.mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const LoginPage()),
+                          (route) => false,
+                        );
+                      }
+                    },
+                    icon: Icon(Icons.logout, color: Colors.redAccent.withOpacity(0.8)),
                     label: Text(
                       "Cerrar Sesión",
                       style: TextStyle(
-                        color: Colors.redAccent.withValues(alpha: 0.8),
+                        color: Colors.redAccent.withOpacity(0.8),
                         fontSize: 16,
                         letterSpacing: 1.0,
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 100),
                 ],
               ),
@@ -346,17 +335,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildGlassTile(
-    IconData icon,
-    String title,
-    String value,
-    VoidCallback onTap,
-  ) {
+  // --- COMPONENTES UI ---
+  Widget _buildGlassTile(IconData icon, String title, String value, VoidCallback onTap) {
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.3),
+        decoration: const BoxDecoration(
+          color: Colors.black26,
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: _neonAccent, size: 20),
@@ -364,7 +349,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       title: Text(
         title.toUpperCase(),
         style: TextStyle(
-          color: Colors.white.withValues(alpha: 0.4),
+          color: Colors.white.withOpacity(0.4),
           fontSize: 10,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.0,
@@ -372,18 +357,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       subtitle: Text(
         value,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
       ),
       trailing: IconButton(
-        icon: Icon(
-          Icons.edit,
-          color: Colors.white.withValues(alpha: 0.2),
-          size: 18,
-        ),
+        icon: Icon(Icons.edit, size: 18, color: Colors.white.withOpacity(0.3)),
         onPressed: onTap,
       ),
     );
@@ -392,7 +369,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildDivider() {
     return Divider(
       height: 1,
-      color: Colors.white.withValues(alpha: 0.1),
+      color: Colors.white.withOpacity(0.1),
       indent: 20,
       endIndent: 20,
     );

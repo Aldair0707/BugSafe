@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:bugsafe_app/login.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+// Rutas correctas
 import 'package:bugsafe_app/home.dart';
+import 'package:bugsafe_app/login.dart';
+import 'package:bugsafe_app/authService.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -13,12 +18,21 @@ class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
   final Color _bgBlack = const Color(0xFF050505);
   final Color _neonAccent = const Color(0xFF9C27B0);
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +40,7 @@ class _RegisterPageState extends State<RegisterPage> {
       backgroundColor: _bgBlack,
       body: Stack(
         children: [
+          // --- Fondo con gradiente ---
           Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
@@ -39,10 +54,7 @@ class _RegisterPageState extends State<RegisterPage> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 20,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -50,16 +62,14 @@ class _RegisterPageState extends State<RegisterPage> {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back_ios,
-                            color: Colors.white,
-                          ),
+                          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
 
                       const SizedBox(height: 10),
 
+                      // --- LOGO ---
                       Stack(
                         alignment: Alignment.center,
                         children: [
@@ -70,7 +80,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: _neonAccent.withValues(alpha: 0.6),
+                                  color: _neonAccent.withOpacity(0.6),
                                   blurRadius: 50,
                                   spreadRadius: 10,
                                 ),
@@ -87,6 +97,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                       const SizedBox(height: 30),
 
+                      // --- TÍTULO ---
                       const Text(
                         "CREAR CUENTA",
                         style: TextStyle(
@@ -107,13 +118,16 @@ class _RegisterPageState extends State<RegisterPage> {
 
                       const SizedBox(height: 40),
 
+                      // --- CAMPOS ---
+
                       _buildModernTextField(
                         controller: _nameController,
                         label: "Nombre completo",
                         icon: Icons.person_outline,
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return "El nombre es requerido";
+                          }
                           return null;
                         },
                       ),
@@ -125,8 +139,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         label: "Nombre de usuario",
                         icon: Icons.alternate_email,
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return "Usuario requerido";
+                          }
                           if (value.length < 4) return "Mínimo 4 caracteres";
                           return null;
                         },
@@ -140,11 +155,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return "Correo requerido";
+                          }
                           final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                          if (!emailRegex.hasMatch(value))
+                          if (!emailRegex.hasMatch(value)) {
                             return "Correo inválido";
+                          }
                           return null;
                         },
                       ),
@@ -159,13 +176,15 @@ class _RegisterPageState extends State<RegisterPage> {
                         validator: (value) {
                           if (value == null || value.isEmpty)
                             return "Contraseña requerida";
-                          if (value.length < 6) return "Mínimo 6 caracteres";
+                          if (value.length < 6)
+                            return "La contraseña debe tener al menos 6 caracteres";
                           return null;
                         },
                       ),
 
                       const SizedBox(height: 40),
 
+                      // --- BOTÓN REGISTRARSE (REAL) ---
                       SizedBox(
                         width: double.infinity,
                         height: 55,
@@ -174,32 +193,12 @@ class _RegisterPageState extends State<RegisterPage> {
                             backgroundColor: _neonAccent,
                             foregroundColor: Colors.white,
                             elevation: 10,
-                            shadowColor: _neonAccent.withValues(alpha: 0.4),
+                            shadowColor: _neonAccent.withOpacity(0.4),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    "¡Cuenta creada exitosamente!",
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  backgroundColor: _neonAccent,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginPage(),
-                                ),
-                              );
-                            }
-                          },
+                          onPressed: _registerUser,
                           child: const Text(
                             "REGISTRARSE",
                             style: TextStyle(
@@ -219,7 +218,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           Text(
                             "¿Ya tienes cuenta?",
                             style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
+                              color: Colors.white.withOpacity(0.6),
                             ),
                           ),
                           TextButton(
@@ -252,13 +251,44 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  // --- LÓGICA DE REGISTRO REAL ---
+  Future<void> _registerUser() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final auth = AuthService();
+
+    try {
+      await auth.register(
+        name: _nameController.text.trim(),
+        username: _usernameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error: $e"),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
+  // --- CAMPO DISEÑO FUTURISTA ---
   Widget _buildModernTextField({
     required TextEditingController controller,
     required String label,
     required IconData icon,
     bool obscureText = false,
     TextInputType keyboardType = TextInputType.text,
-    String? Function(String?)? validator,
+    required String? Function(String?) validator,
   }) {
     return TextFormField(
       controller: controller,
@@ -269,17 +299,17 @@ class _RegisterPageState extends State<RegisterPage> {
       cursorColor: _neonAccent,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-        prefixIcon: Icon(icon, color: _neonAccent.withValues(alpha: 0.7)),
+        labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+        prefixIcon: Icon(icon, color: _neonAccent.withOpacity(0.7)),
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.05),
+        fillColor: Colors.white.withOpacity(0.05),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -287,9 +317,7 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: Colors.redAccent.withValues(alpha: 0.5),
-          ),
+          borderSide: BorderSide(color: Colors.redAccent.withOpacity(0.5)),
         ),
       ),
     );

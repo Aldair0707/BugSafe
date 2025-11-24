@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "64237784026",
+    "project_id": "bugsafe-v1-prueba",
+    "storage_bucket": "bugsafe-v1-prueba.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:64237784026:android:b197d408b1a19e15f60ee3",
+        "android_client_info": {
+          "package_name": "com.example.bugsafe_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBl-dJGrVrYZhAQBRa9BihqMBL3gq3g1_8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
