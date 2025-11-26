@@ -1,8 +1,8 @@
 import 'dart:ui' as ui;
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:bugsafe_app/home.dart';
 import 'package:bugsafe_app/register.dart';
-// Asegúrate de que esta ruta sea correcta según donde guardaste el archivo de tu amigo
 import 'package:bugsafe_app/authService.dart';
 
 class LoginPage extends StatefulWidget {
@@ -46,7 +46,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // LOGO ANIMADO (Estilo Neon)
+                    // LOGO ANIMADO
                     Stack(
                       alignment: Alignment.center,
                       children: [
@@ -156,7 +156,6 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 20),
 
-                    // BOTÓN ACCEDER (Original)
                     SizedBox(
                       width: double.infinity,
                       height: 55,
@@ -171,9 +170,93 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         onPressed: () async {
+                          // 1. Validar formulario
                           if (_formKey.currentState!.validate()) {
-                            // Lógica de login con correo...
-                            // Navigator.pushReplacement(...)
+                            // 2. Mostrar Loading
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => Center(
+                                child: CircularProgressIndicator(
+                                  color: _neonAccent,
+                                ),
+                              ),
+                            );
+
+                            try {
+                              final authService = AuthService();
+
+                              final user = await authService.login(
+                                email: _emailController.text.trim(),
+                                password: _passwordController.text.trim(),
+                              );
+
+                              if (context.mounted) Navigator.pop(context);
+
+                              if (user != null) {
+                                if (context.mounted) {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const HomePage(),
+                                    ),
+                                  );
+                                }
+                              }
+                            } on FirebaseAuthException catch (e) {
+                              if (context.mounted) Navigator.pop(context);
+
+                              String errorMessage =
+                                  "Ocurrió un error al iniciar sesión";
+
+                              if (e.code == 'user-not-found') {
+                                errorMessage =
+                                    "No existe un usuario con este correo.";
+                              } else if (e.code == 'wrong-password') {
+                                errorMessage = "La contraseña es incorrecta.";
+                              } else if (e.code == 'invalid-email') {
+                                errorMessage =
+                                    "El formato del correo es inválido.";
+                              } else if (e.code == 'too-many-requests') {
+                                errorMessage =
+                                    "Demasiados intentos. Intenta más tarde.";
+                              }
+
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      errorMessage,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.red.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) Navigator.pop(context);
+
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      "Error: ${e.toString()}",
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    backgroundColor: Colors.red.withValues(
+                                      alpha: 0.8,
+                                    ),
+                                  ),
+                                );
+                              }
+                            }
                           }
                         },
                         child: const Text(
@@ -216,26 +299,22 @@ class _LoginPageState extends State<LoginPage> {
 
                     const SizedBox(height: 20),
 
-                    // --- NUEVO BOTÓN DE GOOGLE (ESTILO DARK NEON) ---
                     SizedBox(
                       width: double.infinity,
                       height: 55,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          // 1. Fondo Negro
                           backgroundColor: _bgBlack,
-                          // 2. Texto Blanco
                           foregroundColor: Colors.white,
                           elevation: 5,
                           shadowColor: _neonAccent.withValues(alpha: 0.3),
-                          // 3. Borde Morado Neón
                           side: BorderSide(color: _neonAccent, width: 2.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         onPressed: () async {
-                          // Lógica de carga
+                          // lógica de carga
                           showDialog(
                             context: context,
                             barrierDismissible: false,
@@ -246,15 +325,12 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           );
 
-                          // Llamar al servicio
                           final authService = AuthService();
                           final userCredential = await authService
                               .loginWithGoogle();
 
-                          // Cerrar el loading
                           if (context.mounted) Navigator.pop(context);
 
-                          // Verificar resultado
                           if (userCredential != null &&
                               userCredential.user != null) {
                             if (context.mounted) {
@@ -283,7 +359,6 @@ class _LoginPageState extends State<LoginPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Logo de Google (Se mantiene igual)
                             Image.network(
                               'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png',
                               height: 24,
@@ -307,7 +382,6 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-
                     // -----------------------------
                     const SizedBox(height: 30),
 
@@ -351,7 +425,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  // Widget reutilizable para los inputs (Sin cambios)
   Widget _buildModernTextField({
     required TextEditingController controller,
     required String label,

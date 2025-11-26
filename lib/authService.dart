@@ -7,20 +7,71 @@ class AuthService {
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
+  // En authService.dart
+
   Future<UserCredential?> loginWithGoogle() async {
     try {
+      // 1. Iniciar flujo de Google
       final googleUser = await GoogleSignIn().signIn();
-      final gogleAuth = await googleUser?.authentication;
+      final googleAuth = await googleUser?.authentication;
+
+      if (googleAuth == null) return null;
+
       final cred = GoogleAuthProvider.credential(
-        idToken: gogleAuth?.idToken,
-        accessToken: gogleAuth?.accessToken,
+        idToken: googleAuth.idToken,
+        accessToken: googleAuth.accessToken,
       );
 
-      return await _auth.signInWithCredential(cred);
+      // 2. Iniciar sesión en Firebase
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        cred,
+      );
+      final User? user = userCredential.user;
+
+      // 3. --- ESTO ES LO NUEVO ---
+      // Verificar si ya existe en Firestore, si no, crearlo.
+      if (user != null) {
+        final userDoc = await _db.collection("users").doc(user.uid).get();
+
+        if (!userDoc.exists) {
+          await _db.collection("users").doc(user.uid).set({
+            "name": user.displayName ?? "Usuario Google",
+            "username": user.email!.split(
+              '@',
+            )[0], // Crear username basado en el correo
+            "email": user.email,
+            "country": "Sin definir",
+            "phoneNumber": user.phoneNumber ?? "",
+            "createdAt": DateTime.now(),
+            "photoUrl":
+                user.photoURL, // Guardar foto de Google si quieres usarla
+          });
+        }
+      }
+      // ---------------------------
+
+      return userCredential;
     } catch (e) {
       print(e.toString());
+      return null;
     }
-    return null;
+  }
+
+  Future<UserCredential?> loginWithEmailPassword(
+    String email,
+    String password,
+  ) async {
+    try {
+      final UserCredential userCredential = await _auth
+          .signInWithEmailAndPassword(email: email, password: password);
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      print("Error en Firebase Auth: ${e.code}");
+      return null;
+    } catch (e) {
+      print("Error general: $e");
+      return null;
+    }
   }
 
   Future<User?> register({

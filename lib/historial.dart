@@ -1,17 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-
-class InsectoHistorial {
-  final String nombre;
-  final String fecha;
-  final String estado;
-
-  InsectoHistorial({
-    required this.nombre,
-    required this.fecha,
-    this.estado = "Analizado",
-  });
-}
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/database_service.dart';
 
 class HistorialScreen extends StatefulWidget {
   const HistorialScreen({super.key});
@@ -21,31 +11,38 @@ class HistorialScreen extends StatefulWidget {
 }
 
 class _HistorialScreenState extends State<HistorialScreen> {
-  // --- PALETA ---
+  final DatabaseService _dbService = DatabaseService();
+
   final Color _bgBlack = const Color(0xFF050505);
   final Color _neonAccent = const Color(0xFF9C27B0);
   final Color _dangerColor = const Color(0xFFFF4444);
   final Color _surfaceColor = const Color(0xFF1A1A1A);
 
-  final List<InsectoHistorial> _historial = [
-    InsectoHistorial(nombre: "Hormiga Roja", fecha: "12/12/2025"),
-    InsectoHistorial(nombre: "Escarabajo Rinoceronte", fecha: "11/12/2025"),
-    InsectoHistorial(nombre: "Mariposa Morpho", fecha: "10/12/2025"),
-    InsectoHistorial(nombre: "Avispa Asiática", fecha: "09/12/2025"),
-    InsectoHistorial(nombre: "Mantis Religiosa", fecha: "08/12/2025"),
-  ];
+  void _borrarItem(String docId) async {
+    try {
+      await _dbService.deleteDetection(docId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Registro eliminado"),
+            backgroundColor: _surfaceColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text("Error al eliminar")));
+      }
+    }
+  }
 
-  void _borrarItem(int index) {
-    setState(() {
-      _historial.removeAt(index);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("Registro eliminado de la base de datos"),
-        backgroundColor: _surfaceColor,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+  String _formatDate(Timestamp? timestamp) {
+    if (timestamp == null) return "Fecha desconocida";
+    DateTime date = timestamp.toDate();
+    return "${date.day}/${date.month}/${date.year} ${date.hour}:${date.minute.toString().padLeft(2, '0')}";
   }
 
   @override
@@ -54,7 +51,6 @@ class _HistorialScreenState extends State<HistorialScreen> {
       backgroundColor: _bgBlack,
       body: Stack(
         children: [
-          // Fondo Spotlight
           Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
@@ -71,17 +67,48 @@ class _HistorialScreenState extends State<HistorialScreen> {
                 _buildHeader(),
 
                 Expanded(
-                  child: _historial.isEmpty
-                      ? _buildEmptyState()
-                      : ListView.builder(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.only(top: 10, bottom: 80),
-                          itemCount: _historial.length,
-                          itemBuilder: (context, index) {
-                            final item = _historial[index];
-                            return _buildGlassHistoryCard(item, index);
-                          },
-                        ),
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: _dbService.getUserHistory(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return const Center(
+                          child: Text(
+                            "Error al cargar datos",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        );
+                      }
+
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(
+                          child: CircularProgressIndicator(color: _neonAccent),
+                        );
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return _buildEmptyState();
+                      }
+
+                      final docs = snapshot.data!.docs;
+
+                      return ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.only(top: 10, bottom: 80),
+                        itemCount: docs.length,
+                        itemBuilder: (context, index) {
+                          final doc = docs[index];
+                          final data = doc.data() as Map<String, dynamic>;
+
+                          final String id = doc.id;
+                          final String nombre =
+                              data['insectName'] ?? "Desconocido";
+                          final Timestamp? fecha = data['timestamp'];
+
+                          return _buildGlassHistoryCard(id, nombre, fecha);
+                        },
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
@@ -134,7 +161,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
     );
   }
 
-  Widget _buildGlassHistoryCard(InsectoHistorial item, int index) {
+  Widget _buildGlassHistoryCard(String docId, String nombre, Timestamp? fecha) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: ClipRRect(
@@ -167,7 +194,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        item.nombre,
+                        nombre,
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -184,7 +211,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            item.fecha,
+                            _formatDate(fecha), // Usamos el helper
                             style: TextStyle(
                               color: Colors.white.withValues(alpha: 0.4),
                               fontSize: 12,
@@ -200,7 +227,7 @@ class _HistorialScreenState extends State<HistorialScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     GestureDetector(
-                      onTap: () => _borrarItem(index),
+                      onTap: () => _borrarItem(docId),
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         child: Icon(

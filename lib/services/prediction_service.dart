@@ -5,7 +5,7 @@ import 'package:image/image.dart' as img;
 
 class PredictionService {
   final url = Uri.parse(
-    "https://bugsafe.onrender.com/v1/models/reconocimiento-bugsafe:predict",
+    "https://mejorado-l7s4.onrender.com/v1/models/reconocimiento-mejorado:predict",
   );
 
   final headers = {"Content-Type": "application/json;charset=UTF-8"};

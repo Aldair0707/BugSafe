@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
 import '../services/prediction_service.dart';
+import '../services/database_service.dart';
 
 class CameraPage extends StatefulWidget {
   const CameraPage({super.key});
@@ -18,40 +18,83 @@ class _CameraPageState extends State<CameraPage> {
   bool _loading = false;
 
   final PredictionService _predictor = PredictionService();
+  final DatabaseService _dbService = DatabaseService();
 
   String clase(int index) {
     const clases = ["Hormiga", "Abeja", "Escarabajo", "Mosca", "Avispa"];
+    if (index < 0 || index >= clases.length) return "Desconocido";
     return clases[index];
   }
 
   Future<void> _getImage(ImageSource source) async {
-    final picked = await ImagePicker().pickImage(source: source);
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: source,
+        imageQuality: 80,
+      );
 
-    if (picked == null) return;
+      if (picked == null) return;
 
-    setState(() {
-      _image = File(picked.path);
-      _resultado = null;
-    });
+      setState(() {
+        _image = File(picked.path);
+        _resultado = null;
+      });
 
-    await _predict();
+      await _predictAndSave();
+    } catch (e) {
+      print("Error al seleccionar imagen: $e");
+    }
   }
 
-  Future<void> _predict() async {
+  Future<void> _predictAndSave() async {
     if (_image == null) return;
 
     setState(() => _loading = true);
 
     try {
-      int resultado = await _predictor.predict(_image!);
+      int index = await _predictor.predict(_image!);
+      String insectName = clase(index);
+
+      await _dbService.saveDetection(
+        insectResult: insectName,
+        confidence: 0.95,
+      );
 
       setState(() {
-        _resultado = "Insecto detectado: ${clase(resultado)}";
+        _resultado = "Insecto detectado: $insectName";
       });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.history, color: Colors.white),
+                SizedBox(width: 10),
+                Text("Registro guardado exitosamente"),
+              ],
+            ),
+            backgroundColor: _neonAccent.withValues(alpha: 0.8),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
+      }
     } catch (e) {
+      print("Error en proceso: $e");
       setState(() {
-        _resultado = "Error en predicción";
+        _resultado = "Error al analizar";
       });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Error al guardar el registro."),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
 
     setState(() => _loading = false);
@@ -73,6 +116,7 @@ class _CameraPageState extends State<CameraPage> {
       backgroundColor: _bgBlack,
       body: Stack(
         children: [
+          // Fondo
           Container(
             decoration: BoxDecoration(
               gradient: RadialGradient(
@@ -140,17 +184,24 @@ class _CameraPageState extends State<CameraPage> {
           ),
 
           if (_loading)
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: _neonAccent),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "Analizando...",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ],
+            Container(
+              color: Colors.black.withValues(alpha: 0.7),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(color: _neonAccent),
+                    const SizedBox(height: 20),
+                    const Text(
+                      "Analizando...",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
 
@@ -194,7 +245,6 @@ class _CameraPageState extends State<CameraPage> {
                 _buildCorner(Alignment.topRight),
                 _buildCorner(Alignment.bottomLeft),
                 _buildCorner(Alignment.bottomRight),
-
                 Center(
                   child: Icon(
                     Icons.bug_report_outlined,
@@ -342,12 +392,6 @@ class _CameraPageState extends State<CameraPage> {
               ),
             ),
           ),
-
-          _buildTextButton(Icons.tips_and_updates, "Tips", () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Busca buena iluminación")),
-            );
-          }),
         ],
       ),
     );

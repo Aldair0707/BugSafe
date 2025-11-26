@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:bugsafe_app/authService.dart';
+//import 'package:bugsafe_app/home.dart';
 import 'package:bugsafe_app/login.dart';
-import 'package:bugsafe_app/home.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -12,13 +14,24 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
 
+  // Controladores de texto
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // Colores del tema
   final Color _bgBlack = const Color(0xFF050505);
   final Color _neonAccent = const Color(0xFF9C27B0);
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -107,13 +120,15 @@ class _RegisterPageState extends State<RegisterPage> {
 
                       const SizedBox(height: 40),
 
+                      // INPUTS
                       _buildModernTextField(
                         controller: _nameController,
                         label: "Nombre completo",
                         icon: Icons.person_outline,
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.trim().isEmpty) {
                             return "El nombre es requerido";
+                          }
                           return null;
                         },
                       ),
@@ -125,9 +140,12 @@ class _RegisterPageState extends State<RegisterPage> {
                         label: "Nombre de usuario",
                         icon: Icons.alternate_email,
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.trim().isEmpty) {
                             return "Usuario requerido";
-                          if (value.length < 4) return "Mínimo 4 caracteres";
+                          }
+                          if (value.trim().length < 4) {
+                            return "Mínimo 4 caracteres";
+                          }
                           return null;
                         },
                       ),
@@ -140,11 +158,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.trim().isEmpty) {
                             return "Correo requerido";
+                          }
                           final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-                          if (!emailRegex.hasMatch(value))
+                          if (!emailRegex.hasMatch(value.trim())) {
                             return "Correo inválido";
+                          }
                           return null;
                         },
                       ),
@@ -157,15 +177,19 @@ class _RegisterPageState extends State<RegisterPage> {
                         icon: Icons.lock_outline,
                         obscureText: true,
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.trim().isEmpty) {
                             return "Contraseña requerida";
-                          if (value.length < 6) return "Mínimo 6 caracteres";
+                          }
+                          if (value.trim().length < 6) {
+                            return "Mínimo 6 caracteres";
+                          }
                           return null;
                         },
                       ),
 
                       const SizedBox(height: 40),
 
+                      // BOTÓN DE REGISTRO CON LÓGICA
                       SizedBox(
                         width: double.infinity,
                         height: 55,
@@ -179,27 +203,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          onPressed: () {
-                            if (_formKey.currentState!.validate()) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    "¡Cuenta creada exitosamente!",
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  backgroundColor: _neonAccent,
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginPage(),
-                                ),
-                              );
-                            }
-                          },
+                          onPressed: _handleRegister,
                           child: const Text(
                             "REGISTRARSE",
                             style: TextStyle(
@@ -213,6 +217,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
                       const SizedBox(height: 20),
 
+                      // Redirección al Login
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -250,6 +255,77 @@ class _RegisterPageState extends State<RegisterPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _handleRegister() async {
+    if (_formKey.currentState!.validate()) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) =>
+            Center(child: CircularProgressIndicator(color: _neonAccent)),
+      );
+
+      try {
+        final authService = AuthService();
+
+        await authService.register(
+          name: _nameController.text.trim(),
+          username: _usernameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+        if (mounted) Navigator.pop(context);
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginPage()),
+            (route) => false,
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        if (mounted) Navigator.pop(context);
+
+        String errorMessage = "Error al crear la cuenta";
+
+        if (e.code == 'email-already-in-use') {
+          errorMessage = "Este correo ya está en uso.";
+        } else if (e.code == 'weak-password') {
+          errorMessage = "La contraseña es muy débil.";
+        } else if (e.code == 'invalid-email') {
+          errorMessage = "El correo no es válido.";
+        } else if (e.code == 'network-request-failed') {
+          errorMessage = "Error de conexión.";
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                errorMessage,
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.red.withValues(alpha: 0.8),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        // Otros errores
+        if (mounted) Navigator.pop(context);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                "Ocurrió un error inesperado",
+                style: TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.red.withValues(alpha: 0.8),
+            ),
+          );
+        }
+      }
+    }
   }
 
   Widget _buildModernTextField({

@@ -64,7 +64,7 @@ class _HomePageState extends State<HomePage> {
       case 2:
         return const HistorialScreen();
       case 3:
-        return ProfileScreen(user: UserModel());
+        return const ProfileScreen();
       default:
         return const HomeView();
     }
