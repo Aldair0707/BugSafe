@@ -251,10 +251,10 @@ class _HistorialScreenState extends State<HistorialScreen> {
                           ),
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        child: Text(
-                          "Detalles",
-                          style: TextStyle(color: _neonAccent, fontSize: 10),
-                        ),
+                        //child: Text(
+                        //  "Detalles",
+                        //  style: TextStyle(color: _neonAccent, fontSize: 10),
+                        //),
                       ),
                     ),
                   ],

@@ -43,3 +43,20 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Archivos de Flutter/Dart
+/build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+
+# Archivos de Android generados
+android/.gradle
+android/local.properties
+
+# --- SEGURIDAD (AGREGA ESTO SI NO ESTÁ) ---
+key.properties
+**/*.jks
+**/*.keystore
+google-services.json

@@ -12,7 +12,28 @@
           "package_name": "com.bugsafe.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "814636268630-umrdp27j3v54cub5dt95hees0pvd68d3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bugsafe.app",
+            "certificate_hash": "b35601d43978cdcdb6bb33065163fcf9bf6ef8be"
+          }
+        },
+        {
+          "client_id": "814636268630-vc37kguendt3ntijc82k5tsll8dtiv1i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bugsafe.app",
+            "certificate_hash": "ff207567111b4c7780cb5cd79012ed92501dba53"
+          }
+        },
+        {
+          "client_id": "814636268630-j3brd94fe6jtki40m34c3cu7ommll3cr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB3vS4GUn_9UrhjI4a4ujgvSTOrlSXmHmo"
@@ -20,7 +41,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "814636268630-j3brd94fe6jtki40m34c3cu7ommll3cr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

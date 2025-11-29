@@ -7,11 +7,9 @@ class AuthService {
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // En authService.dart
-
   Future<UserCredential?> loginWithGoogle() async {
     try {
-      // 1. Iniciar flujo de Google
+      // Iniciar flujo de Google
       final googleUser = await GoogleSignIn().signIn();
       final googleAuth = await googleUser?.authentication;
 
@@ -22,33 +20,27 @@ class AuthService {
         accessToken: googleAuth.accessToken,
       );
 
-      // 2. Iniciar sesión en Firebase
+      // Iniciar sesión en Firebase
       final UserCredential userCredential = await _auth.signInWithCredential(
         cred,
       );
       final User? user = userCredential.user;
 
-      // 3. --- ESTO ES LO NUEVO ---
-      // Verificar si ya existe en Firestore, si no, crearlo.
       if (user != null) {
         final userDoc = await _db.collection("users").doc(user.uid).get();
 
         if (!userDoc.exists) {
           await _db.collection("users").doc(user.uid).set({
             "name": user.displayName ?? "Usuario Google",
-            "username": user.email!.split(
-              '@',
-            )[0], // Crear username basado en el correo
+            "username": user.email!.split('@')[0],
             "email": user.email,
             "country": "Sin definir",
             "phoneNumber": user.phoneNumber ?? "",
             "createdAt": DateTime.now(),
-            "photoUrl":
-                user.photoURL, // Guardar foto de Google si quieres usarla
+            "photoUrl": user.photoURL,
           });
         }
       }
-      // ---------------------------
 
       return userCredential;
     } catch (e) {

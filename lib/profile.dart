@@ -84,6 +84,92 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // --- NUEVA FUNCIÓN: MOSTRAR ACERCA DE ---
+  void _showAboutApp() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: _surfaceColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide(color: _neonAccent.withValues(alpha: 0.5)),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Logo
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _neonAccent, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _neonAccent.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                    ),
+                  ],
+                ),
+                child: const CircleAvatar(
+                  backgroundColor: Colors.black,
+                  backgroundImage: AssetImage("assets/logo2.jpeg"),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "BUGSAFE",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2.0,
+                ),
+              ),
+              Text(
+                "v1.0.0",
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Aplicación impulsada por IA para la detección y clasificación de insectos en tiempo real.",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                "© 2025 BugSafe Team\nTodos los derechos reservados.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            Center(
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  "Cerrar",
+                  style: TextStyle(
+                    color: _neonAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (currentUser == null) {
@@ -212,7 +298,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                       const SizedBox(height: 10),
 
-                      //FOTO DE PERFI
+                      //FOTO DE PERFIL
                       Stack(
                         alignment: Alignment.center,
                         children: [
@@ -337,6 +423,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     () =>
                                         _editField("country", country, "País"),
                                   ),
+                                  _buildDivider(),
+                                  // --- NUEVO BOTÓN: ACERCA DE ---
+                                  ListTile(
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.3,
+                                        ),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.info_outline,
+                                        color: _neonAccent,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      "ACERCA DE",
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.0,
+                                      ),
+                                    ),
+                                    subtitle: const Text(
+                                      "Información de la app",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    trailing: Icon(
+                                      Icons.arrow_forward_ios,
+                                      color: Colors.white.withValues(
+                                        alpha: 0.2,
+                                      ),
+                                      size: 16,
+                                    ),
+                                    onTap: _showAboutApp,
+                                  ),
                                 ],
                               ),
                             ),
@@ -386,6 +517,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  // Widget auxiliar para los tiles normales
   Widget _buildGlassTile(
     IconData icon,
     String title,

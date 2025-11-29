@@ -5,35 +5,30 @@ class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Método simplificado: SOLO guarda datos de texto
   Future<void> saveDetection({
-    required String insectResult, // El nombre del insecto
-    required double confidence, // Probabilidad
+    required String insectResult,
+    required double confidence,
   }) async {
     try {
       final user = _auth.currentUser;
-      if (user == null)
-        return; // Si no hay usuario, no guardamos nada (o lanzamos error)
+      if (user == null) return;
 
-      // Guardamos solo el registro en Firestore
       await _db.collection('history').add({
         'userId': user.uid,
         'userEmail': user.email,
         'insectName': insectResult,
         'confidence': confidence,
-        'timestamp':
-            FieldValue.serverTimestamp(), // La fecha y hora exactas del servidor
-        'type': 'text_log_only', // (Opcional) Para saber que no hay foto
+        'timestamp': FieldValue.serverTimestamp(),
+        'type': 'text_log_only',
       });
 
-      print("✅ Registro guardado en historial (Sin imagen)");
+      print("Registro guardado en historial (Sin imagen)");
     } catch (e) {
-      print("❌ Error al guardar registro: $e");
+      print("Error al guardar registro: $e");
       rethrow;
     }
   }
 
-  // Obtener historial (Sin cambios, solo traerá datos de texto)
   Stream<QuerySnapshot> getUserHistory() {
     final user = _auth.currentUser;
     if (user != null) {
